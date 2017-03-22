@@ -98,16 +98,21 @@ function decrypt($cyphertext) {
 	for ($i = strlen($message) - 1; is_numeric($message[$i]); $i--) {
 		$num_str = $message[$i] . $num_str;
 	}
-	$first = intval($num_str);var_dump($first);
+	$first = intval($num_str);
 	
 	// Strip the characters preceeding message block and $first and it's gap
-	$message = substr($message, $first, strlen($cyphertext) - $i + 1 - $gap);
+	$message = substr($message, $first, strlen($message) - $i + 1 - $gap);
 	
 	// Generate plaintext
 	global $punctuation_map;
 	$plaintext = '';
 	for ($i = 0; $i < strlen($message); $i++) {
-		$plaintext .= in_array($message[$i], $punctuation_map) ? array_search($message[$i], $punctuation_map) : $message[$i];
+		$plaintext .= in_array($message[$i], $punctuation_map) ?
+			
+			// Map character to the proper punctuation
+			array_search($message[$i], $punctuation_map) :
+			
+			$message[$i];
 		
 		// Skip the gap
 		for ($j = 0; $j < $gap; $j++, $i++);
