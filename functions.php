@@ -11,11 +11,11 @@ $punctuation_map = array(
 );
 
 function encrypt($plaintext) {
-	$vowels = 0;
-	$first = 0;
 	$cyphertext = '';
 	
 	// Generate first 200 random characters
+	$vowels = 0;
+	$first = 0;
 	for ($i = 0; $i < 200; $i++) {
 		$char = generate_random();
 		$cyphertext .= $char;
@@ -62,7 +62,16 @@ function encrypt($plaintext) {
 		}
 	}
 	
+	// Append $first
+	$cyphertext .= $first;
 	
+	// Gap before appending $gap
+	for ($i = 0; $i < $gap; $i++) {
+		$cyphertext .= generate_random();
+	}
+	
+	// Append $gap
+	$cyphertext .= $gap;
 	
 	// Append the last block
 	$cyphertext .= $last_block;
@@ -71,21 +80,37 @@ function encrypt($plaintext) {
 }
 
 function decrypt($cyphertext) {
-	$first = 0;
-	for ($vowels = 0, $i = 0; $vowels < 5 && $i < 200; $i++) {
-		if (is_vowel($cyphertext[$i])) {
-			$vowels++;
-			if ($vowels === 5) {
-				$first = $i;
-			}
-		}
-	}
-	$code = substr($cyphertext, 200 + $first, strlen($cyphertext) - 400 - $first);
+	// Strip first and last 200-character-blocks
+	$message = substr($cyphertext, 200, strlen($cyphertext) - 400);
 	
+	// Get $gap
+	$num_str = '';
+	for ($i = strlen($message) - 1; is_numeric($message[$i]); $i--) {
+		$num_str = $message[$i] . $num_str;
+	}
+	$gap = intval($num_str);
+	
+	// Strip $gap and it's gap
+	$message = substr($message, 0, $i + 1 - $gap);
+	
+	// Get $first
+	$num_str = '';
+	for ($i = strlen($message) - 1; is_numeric($message[$i]); $i--) {
+		$num_str = $message[$i] . $num_str;
+	}
+	$first = intval($num_str);var_dump($first);
+	
+	// Strip the characters preceeding message block and $first and it's gap
+	$message = substr($message, $first, strlen($cyphertext) - $i + 1 - $gap);
+	
+	// Generate plaintext
 	global $punctuation_map;
 	$plaintext = '';
-	for ($i = 0; $i < strlen($code); $i++) {
-		$plaintext .= in_array($code[$i], $punctuation_map) ? array_search($code[$i], $punctuation_map) : $code[$i];
+	for ($i = 0; $i < strlen($message); $i++) {
+		$plaintext .= in_array($message[$i], $punctuation_map) ? array_search($message[$i], $punctuation_map) : $message[$i];
+		
+		// Skip the gap
+		for ($j = 0; $j < $gap; $j++, $i++);
 	}
 	
 	return $plaintext;
