@@ -12,7 +12,7 @@ $punctuation_map = array(
 
 function encrypt($plaintext) {
 	$vowels = 0;
-	$vowel_5 = 0;
+	$first = 0;
 	$cyphertext = '';
 	
 	// Generate first 200 random characters
@@ -22,41 +22,65 @@ function encrypt($plaintext) {
 		if (is_vowel($char)) {
 			$vowels++;
 			if ($vowels === 5) {
-				$vowel_5 = $i;
+				$first = $i;
 			}
 		}
 	}
 	
 	// Fill gap to first character of the plaintext with random characters
-	for ($i = 0; $i < $vowel_5; $i++) {
+	for ($i = 0; $i < $first; $i++) {
 		$cyphertext .= generate_random();
 	}
 	
-	// Translate punctuation accordingly
-	global $punctuation_map;
-	$code = '';
-	for ($i = 0; $i < strlen($plaintext); $i++) {
-		$code .= empty($punctuation_map[$plaintext[$i]]) ? $plaintext[$i] : $punctuation_map[$plaintext[$i]];
-	}
-	
-	$cyphertext .= $code;
+	//Generate the last 200 character-block to be appended later
+	$last_block = '';
+	$vowels = 0;
+	$gap = 0;
 	for ($i = 0; $i < 200; $i++) {
-		$cyphertext .= generate_random();
+		$char = generate_random();
+		$last_block = $char . $last_block;
+		if (is_vowel($char)) {
+			$vowels++;
+			if ($vowels === 3) {
+				$gap = $i;
+			}
+		}
 	}
+	
+	// Generate the message block
+	global $punctuation_map;
+	for ($i = 0; $i < strlen($plaintext); $i++) {
+		$cyphertext .= empty($punctuation_map[$plaintext[$i]]) ?
+				$plaintext[$i] :
+				
+				//Translate punctuation accordingly
+				$punctuation_map[$plaintext[$i]];
+		
+		// Fill in the gaps
+		for ($j = 0; $j < $gap; $j++) {
+			$cyphertext .= generate_random();
+		}
+	}
+	
+	
+	
+	// Append the last block
+	$cyphertext .= $last_block;
+	
 	return $cyphertext;
 }
 
 function decrypt($cyphertext) {
-	$vowel_5 = 0;
+	$first = 0;
 	for ($vowels = 0, $i = 0; $vowels < 5 && $i < 200; $i++) {
 		if (is_vowel($cyphertext[$i])) {
 			$vowels++;
 			if ($vowels === 5) {
-				$vowel_5 = $i;
+				$first = $i;
 			}
 		}
 	}
-	$code = substr($cyphertext, 200 + $vowel_5, strlen($cyphertext) - 400 - $vowel_5);
+	$code = substr($cyphertext, 200 + $first, strlen($cyphertext) - 400 - $first);
 	
 	global $punctuation_map;
 	$plaintext = '';
